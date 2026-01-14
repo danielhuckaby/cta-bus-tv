@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MONTROSE HUB - CRT 8-BIT EDITION</title>
+  <title>MONTROSE HUB - BUFFERED EDITION</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -21,10 +21,10 @@
       flex-direction: column;
       overflow: hidden;
       text-transform: uppercase;
-      cursor: none; /* Hides mouse for TV */
+      cursor: none;
     }
 
-    /* CRT Scanline & Phosphor Glow Effect */
+    /* CRT Overlay */
     body::after {
       content: " ";
       position: absolute;
@@ -36,98 +36,39 @@
       pointer-events: none;
     }
 
-    /* --- 8-BIT SPRITE ANIMATIONS --- */
-    .sprite-layer {
-      position: absolute;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    /* 8-Bit CTA Bus */
+    /* --- SPRITES --- */
+    .sprite-layer { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
     .bus-sprite {
-      position: absolute;
-      bottom: 120px;
-      width: 80px; height: 32px;
-      background: #eee;
-      border: 4px solid #000;
-      box-shadow: 
-        inset 0 8px 0 #333,
-        0 4px 0 var(--cta-blue),
-        0 8px 0 var(--cta-red);
+      position: absolute; bottom: 120px; width: 80px; height: 32px; background: #eee;
+      border: 4px solid #000; box-shadow: inset 0 8px 0 #333, 0 4px 0 var(--cta-blue), 0 8px 0 var(--cta-red);
       animation: drive-bus 18s linear infinite;
     }
-    .bus-sprite::after, .bus-sprite::before {
-      content: ''; position: absolute; bottom: -8px;
-      width: 12px; height: 12px; background: #000;
-    }
-    .bus-sprite::before { left: 8px; }
-    .bus-sprite::after { right: 8px; }
-
-    /* 8-Bit Brown Line Train */
     .train-sprite {
-      position: absolute;
-      top: 150px;
-      width: 120px; height: 28px;
-      background: #bbb;
-      border: 4px solid #000;
-      box-shadow: 
-        inset 20px 0 0 #555, inset 60px 0 0 #555, inset 100px 0 0 #555,
-        0 -4px 0 var(--cta-brown);
+      position: absolute; top: 150px; width: 120px; height: 28px; background: #bbb;
+      border: 4px solid #000; box-shadow: inset 20px 0 0 #555, inset 60px 0 0 #555, inset 100px 0 0 #555, 0 -4px 0 var(--cta-brown);
       animation: drive-train 14s linear infinite;
     }
-
     @keyframes drive-bus { from { left: -100px; } to { left: 110vw; } }
     @keyframes drive-train { from { right: -150px; } to { right: 110vw; } }
 
-    /* --- UI LAYOUT --- */
+    /* --- UI --- */
     .top-bar {
-      display: flex;
-      justify-content: space-between;
-      padding: 20px 40px;
-      background-color: #000;
-      color: #FFFF00;
-      font-size: 14px;
-      border-bottom: 4px solid #FFF;
-      z-index: 10;
+      display: flex; justify-content: space-between; padding: 20px 40px; 
+      background-color: #000; color: #FFFF00; font-size: 14px; border-bottom: 4px solid #FFF; z-index: 10;
     }
-
-    .container {
-      padding: 30px 50px; /* Large padding for CRT overscan */
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      z-index: 5;
-    }
-
-    .section-box {
-      background-color: rgba(0, 0, 0, 0.85); /* Semi-transparent to see sprites behind */
-      border: 4px solid #FFF;
-      padding: 20px;
-      box-shadow: 10px 10px 0px #000;
-    }
-
-    .label { font-size: 14px; margin-bottom: 15px; display: inline-block; padding: 5px; }
-    .bus-color { color: #00FFFF; border: 2px solid #00FFFF; }
-    .train-color { color: #FFA500; border: 2px solid #FFA500; }
-
+    .container { padding: 30px 50px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-around; z-index: 5; }
+    .section-box { background-color: rgba(0, 0, 0, 0.85); border: 4px solid #FFF; padding: 20px; box-shadow: 10px 10px 0px #000; }
+    .label { font-size: 14px; margin-bottom: 15px; display: inline-block; padding: 5px; border: 2px solid; }
+    .bus-color { color: #00FFFF; border-color: #00FFFF; }
+    .train-color { color: #FFA500; border-color: #FFA500; }
     .arrival-row { font-size: 34px; margin: 10px 0; display: flex; align-items: center; }
     .live-icon { color: #00FF00; font-size: 12px; margin-left: 20px; }
     .sch-icon { color: #666; font-size: 10px; margin-left: 20px; }
-    
     .due { color: #00FF00; }
     .blink { animation: step-blink 1s step-end infinite; }
     @keyframes step-blink { 50% { visibility: hidden; } }
 
-    .ticker-wrap {
-      background-color: #FF0000;
-      color: #FFF;
-      padding: 15px 0;
-      font-size: 16px;
-      border-top: 4px solid #FFF;
-      z-index: 50;
-    }
+    .ticker-wrap { background-color: #FF0000; color: #FFF; padding: 15px 0; font-size: 16px; border-top: 4px solid #FFF; z-index: 50; }
     .ticker { display: inline-block; white-space: nowrap; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
   </style>
@@ -158,59 +99,81 @@
 
   <div class="ticker-wrap">
     <div class="ticker">
-      WEATHER: 28°F - OVERCAST ... CTA SYSTEM STATUS: NORMAL SERVICE ... STAND CLEAR OF DOORS ... THANK YOU FOR RIDING THE CTA ... MONTROSE HUB OPERATIONAL ...
+      MONTROSE HUB: 2-MINUTE DEPARTURE BUFFER ENABLED ... CHECKING LIVE TRANSIT FEEDS ... STAND CLEAR OF DOORS ... WEATHER: 28°F - CHICAGO WINTER ...
     </div>
   </div>
 
   <script>
     const BUS_KEY = "G2u3hCqi5yzbQppaPGcqAaVat";
-    const TRAIN_KEY = "0fe79802b0f54862852c4d48ea6e51f1"; 
-    const PROXY = "https://corsproxy.io/?";
+    const TRAIN_KEY = "0fe79802b0f54862852c4d48ea6e51f1";
+    
+    const PROXIES = [
+      "https://corsproxy.io/?",
+      "https://api.allorigins.win/raw?url="
+    ];
+    let proxyIndex = 0;
 
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('clock').textContent = now.toLocaleTimeString();
-    }
+    function updateClock() { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
-    updateClock();
+
+    async function fetchCTA(targetUrl) {
+      const cacheBuster = `&t=${Date.now()}`;
+      const finalUrl = PROXIES[proxyIndex] + encodeURIComponent(targetUrl + cacheBuster);
+      try {
+        const r = await fetch(finalUrl);
+        if (!r.ok) throw new Error();
+        return await r.json();
+      } catch (e) {
+        proxyIndex = (proxyIndex + 1) % PROXIES.length;
+        return null;
+      }
+    }
 
     async function getBusData() {
-      const url = `${PROXY}${encodeURIComponent(`https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=14828&format=json`)}`;
-      try {
-        const r = await fetch(url);
-        const d = await r.json();
-        const prd = d["bustime-response"].prd;
-        let html = "";
-        if (prd) {
-          prd.slice(0, 2).forEach(b => {
-            const isDue = b.prdctdn === "DUE";
-            const timeStr = isDue ? "DUE" : b.prdctdn + " MIN";
-            html += `<div class="arrival-row ${isDue ? 'due blink' : ''}">${timeStr} <span class="live-icon">((( )))</span></div>`;
-          });
-        } else { html = '<div class="arrival-row" style="color:#666">NO BUSES</div>'; }
-        document.getElementById('bus-list').innerHTML = html;
-      } catch (e) { console.error(e); }
+      const url = `https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=14828&format=json`;
+      const data = await fetchCTA(url);
+      if (!data) return;
+      const prd = data["bustime-response"].prd;
+      let html = "";
+      if (prd) {
+        prd.slice(0, 2).forEach(b => {
+          const isDue = b.prdctdn === "DUE";
+          html += `<div class="arrival-row ${isDue ? 'due blink' : ''}">${isDue ? 'DUE' : b.prdctdn + ' MIN'} <span class="live-icon">((( )))</span></div>`;
+        });
+      } else { html = '<div class="arrival-row" style="color:#666">NO BUSES</div>'; }
+      document.getElementById('bus-list').innerHTML = html;
     }
 
     async function getTrainData() {
-      const url = `${PROXY}${encodeURIComponent(`https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`)}`;
-      try {
-        const r = await fetch(url);
-        const d = await r.json();
-        const eta = d.ctatt.eta;
-        let html = "";
-        const loopTrains = eta ? eta.filter(t => t.destNm === "Loop") : [];
-        if (loopTrains.length > 0) {
-          loopTrains.slice(0, 2).forEach(t => {
-            const diff = Math.round((new Date(t.arrT) - new Date(t.prdt)) / 60000);
-            const isLive = t.isApp === "1" || t.isSch === "0";
-            const icon = isLive ? `<span class="live-icon ${diff <= 1 ? 'blink' : ''}">((( )))</span>` : `<span class="sch-icon">[SCH]</span>`;
-            const timeStr = diff <= 1 ? 'DUE' : diff + ' MIN';
-            html += `<div class="arrival-row ${diff <= 1 ? 'due blink' : ''}">${timeStr} ${icon}</div>`;
-          });
-        } else { html = '<div class="arrival-row" style="color:#666">NO TRAINS</div>'; }
-        document.getElementById('train-list').innerHTML = html;
-      } catch (e) { console.error(e); }
+      const url = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`;
+      const data = await fetchCTA(url);
+      if (!data || !data.ctatt) return;
+      
+      const eta = data.ctatt.eta;
+      let html = "";
+      
+      const loopTrains = eta ? eta.filter(t => t.trDr === "1") : [];
+
+      if (loopTrains.length > 0) {
+        loopTrains.slice(0, 2).forEach(t => {
+          const rawDiff = Math.round((new Date(t.arrT) - new Date(t.prdt)) / 60000);
+          
+          // --- THE BUFFER ADJUSTMENT ---
+          // Subtract 2 minutes, but don't let it go below 0.
+          const bufferedDiff = Math.max(0, rawDiff - 2);
+          
+          const isLive = t.isApp === "1" || t.isSch === "0";
+          const icon = isLive ? `<span class="live-icon ${bufferedDiff <= 1 ? 'blink' : ''}">((( )))</span>` : `<span class="sch-icon">[SCH]</span>`;
+          
+          // If buffered time is 1 min or 0 min, show "DUE"
+          const timeStr = bufferedDiff <= 1 ? 'DUE' : bufferedDiff + ' MIN';
+          
+          html += `<div class="arrival-row ${bufferedDiff <= 1 ? 'due blink' : ''}">${timeStr} ${icon}</div>`;
+        });
+      } else { 
+        html = '<div class="arrival-row" style="color:#666; font-size:12px;">NO LOOP TRAINS</div>'; 
+      }
+      document.getElementById('train-list').innerHTML = html;
     }
 
     function updateAll() { getBusData(); getTrainData(); }
