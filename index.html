@@ -21,7 +21,7 @@
       flex-direction: column;
       overflow: hidden;
       text-transform: uppercase;
-      cursor: none; /* Hides cursor for kiosk mode */
+      cursor: none; /* Hides cursor for kiosk use */
     }
 
     /* CRT Scanline Overlay */
@@ -103,61 +103,97 @@
     </div>
   </div>
 
-  <script>
-    // --- KEYS & CONFIG ---
+<script>
+    // --- CONFIGURATION ---
     const BUS_KEY = "G2u3hCqi5yzbQppaPGcqAaVat";
     const TRAIN_KEY = "0fe79802b0f54862852c4d48ea6e51f1";
-    
-    const PROXIES = [
-      "https://corsproxy.io/?",
-      "https://api.allorigins.win/raw?url="
-    ];
-    let proxyIndex = 0;
+
+    // --- STATE MANAGEMENT ---
+    // We store the last successful data so we don't wipe the screen on error
+    let lastBusHtml = '<div class="arrival-row">LOADING...</div>';
+    let lastTrainHtml = '<div class="arrival-row">LOADING...</div>';
 
     // --- CLOCK ---
     function updateClock() { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
-    // --- FETCH HELPER ---
-    async function fetchCTA(targetUrl) {
-      // NOTE: No &t= cache buster for Train API compatibility
-      const finalUrl = PROXIES[proxyIndex] + encodeURIComponent(targetUrl);
+    // --- BUS FETCH (Simple & Fast) ---
+    async function getBusData() {
+      // Bus API supports random numbers natively. Safe and fast.
+      const url = `https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=14828&format=json&random=${Date.now()}`;
+      const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+      
       try {
-        const r = await fetch(finalUrl);
-        if (!r.ok) throw new Error("Network Error");
-        return await r.json();
-      } catch (e) {
-        console.warn(`Proxy ${proxyIndex} hiccup. Retrying...`);
-        proxyIndex = (proxyIndex + 1) % PROXIES.length;
-        return null;
+        const r = await fetch(proxyUrl, {cache: "no-store"});
+        const data = await r.json();
+        
+        if (!data || !data["bustime-response"]) return;
+        const prd = data["bustime-response"].prd;
+        
+        let html = "";
+        if (prd) {
+          prd.slice(0, 2).forEach(b => {
+            const isDue = b.prdctdn === "DUE";
+            html += `<div class="arrival-row ${isDue ? 'due blink' : ''}">${isDue ? 'DUE' : b.prdctdn + ' MIN'} <span class="live-icon">((( )))</span></div>`;
+          });
+        } else { html = '<div class="arrival-row" style="color:#666">NO BUSES</div>'; }
+        
+        // Success! Update the screen and save state
+        lastBusHtml = html;
+        document.getElementById('bus-list').innerHTML = html;
+        
+      } catch(e) { 
+        console.warn("Bus fetch hiccup (using cached display)"); 
+        // On error, do NOTHING. Keep the old data on screen.
       }
     }
 
-    // --- BUS DATA ---
-    async function getBusData() {
-      const url = `https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=14828&format=json`;
-      const data = await fetchCTA(url);
-      if (!data) return;
+    // --- TRAIN FETCH (The Hybrid Strategy) ---
+    async function getTrainData() {
+      const cleanUrl = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`;
       
-      const prd = data["bustime-response"].prd;
-      let html = "";
-      if (prd) {
-        prd.slice(0, 2).forEach(b => {
-          const isDue = b.prdctdn === "DUE";
-          html += `<div class="arrival-row ${isDue ? 'due blink' : ''}">${isDue ? 'DUE' : b.prdctdn + ' MIN'} <span class="live-icon">((( )))</span></div>`;
-        });
-      } else { html = '<div class="arrival-row" style="color:#666">NO BUSES</div>'; }
-      document.getElementById('bus-list').innerHTML = html;
+      try {
+        // STRATEGY A: The "Hash Trick" (Fast)
+        // We append #random to the URL. The Proxy sees it as new, but the CTA server ignores it.
+        // This is much faster than the AllOrigins wrapper.
+        const hashUrl = cleanUrl + `#${Date.now()}`; 
+        const fastProxy = "https://corsproxy.io/?" + encodeURIComponent(hashUrl);
+        
+        // Set a timeout of 5 seconds for the fast proxy
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const r = await fetch(fastProxy, { signal: controller.signal, cache: "no-store" });
+        clearTimeout(timeoutId);
+        
+        const data = await r.json();
+        processTrainData(data); // If this works, we are done!
+
+      } catch (e) {
+        console.warn("Fast proxy failed, switching to backup...", e);
+        
+        // STRATEGY B: The "Wrapper Trick" (Slow but Reliable)
+        // Fallback to AllOrigins if the fast one fails
+        try {
+          const wrapperUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}&rand=${Date.now()}`;
+          const r2 = await fetch(wrapperUrl);
+          const wrapperData = await r2.json();
+          const realData = JSON.parse(wrapperData.contents);
+          processTrainData(realData);
+        } catch (e2) {
+          console.error("All proxies failed.");
+          // On total failure, update UI to show "SIGNAL WEAK" only if we have NO data yet.
+          if (lastTrainHtml.includes("LOADING")) {
+            document.getElementById('train-list').innerHTML = '<div class="arrival-row" style="color:red; font-size:12px;">SIGNAL WEAK...</div>';
+          }
+        }
+      }
     }
 
-    // --- TRAIN DATA ---
-    async function getTrainData() {
-      const url = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`;
-      const data = await fetchCTA(url);
-      
+    // --- HELPER: Process Train JSON ---
+    function processTrainData(data) {
       if (!data || !data.ctatt) return;
-      if (data.ctatt.errNm) return; // Silent fail on error to keep old data visible
-
+      
       const eta = data.ctatt.eta;
       let html = "";
       
@@ -167,33 +203,33 @@
       if (loopTrains.length > 0) {
         loopTrains.slice(0, 2).forEach(t => {
           const rawDiff = Math.round((new Date(t.arrT) - new Date(t.prdt)) / 60000);
-          
-          // BUFFER: Subtract 2 mins walking time
           const bufferedDiff = Math.max(0, rawDiff - 2);
-          
           const isLive = t.isApp === "1" || t.isSch === "0";
           const icon = isLive ? `<span class="live-icon ${bufferedDiff <= 1 ? 'blink' : ''}">((( )))</span>` : `<span class="sch-icon">[SCH]</span>`;
           const timeStr = bufferedDiff <= 1 ? 'DUE' : bufferedDiff + ' MIN';
-          
           html += `<div class="arrival-row ${bufferedDiff <= 1 ? 'due blink' : ''}">${timeStr} ${icon}</div>`;
         });
       } else { 
         html = '<div class="arrival-row" style="color:#666; font-size:12px;">NO LOOP TRAINS</div>'; 
       }
+      
+      // Success! Update screen
+      lastTrainHtml = html;
       document.getElementById('train-list').innerHTML = html;
     }
 
     // --- WEATHER & TICKER ---
     async function updateTicker() {
-      let weatherMsg = "WEATHER: N/A";
+      let weatherMsg = "";
       try {
         const wRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=41.96&longitude=-87.67&current=temperature_2m&temperature_unit=fahrenheit");
         const wData = await wRes.json();
         const temp = Math.round(wData.current.temperature_2m);
-        weatherMsg = `WEATHER: ${temp}°F - CHICAGO`;
+        weatherMsg = `WEATHER: ${temp}°F ... `;
       } catch (e) {}
 
-      const msg = `MONTROSE HUB: 2-MINUTE BUFFER ACTIVE ... STAND CLEAR OF DOORS ... ${weatherMsg} ... HAVE A SAFE COMMUTE ...`;
+      const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const msg = `MONTROSE HUB: LIVE UPDATES [${now}] ... 2-MINUTE BUFFER ACTIVE ... ${weatherMsg}HAVE A SAFE COMMUTE ...`;
       document.getElementById('marquee-text').textContent = msg;
     }
 
@@ -203,9 +239,8 @@
     updateAll();
     updateTicker();
     
-    // Refresh Transit every 30s, Weather every 10m
-    setInterval(updateAll, 30000);
-    setInterval(updateTicker, 600000); 
+    setInterval(updateAll, 30000); // 30s Refresh
+    setInterval(updateTicker, 600000); // 10m Weather Refresh
   </script>
 </body>
 </html>
