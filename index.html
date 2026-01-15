@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MONTROSE HUB - BUFFERED EDITION</title>
+  <title>MONTROSE HUB - LIVE</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -21,10 +21,10 @@
       flex-direction: column;
       overflow: hidden;
       text-transform: uppercase;
-      cursor: none;
+      cursor: none; /* Hides cursor for kiosk mode */
     }
 
-    /* CRT Overlay */
+    /* CRT Scanline Overlay */
     body::after {
       content: " ";
       position: absolute;
@@ -88,22 +88,23 @@
   <div class="container">
     <div class="section-box">
       <div class="label bus-color">BUS 78 MONTROSE (WB)</div>
-      <div id="bus-list"><div class="arrival-row">TUNING...</div></div>
+      <div id="bus-list"><div class="arrival-row">LOADING...</div></div>
     </div>
 
     <div class="section-box">
       <div class="label train-color">L BROWN LINE (LOOP)</div>
-      <div id="train-list"><div class="arrival-row">TUNING...</div></div>
+      <div id="train-list"><div class="arrival-row">LOADING...</div></div>
     </div>
   </div>
 
   <div class="ticker-wrap">
-    <div class="ticker">
-      MONTROSE HUB: 2-MINUTE DEPARTURE BUFFER ENABLED ... CHECKING LIVE TRANSIT FEEDS ... STAND CLEAR OF DOORS ... WEATHER: 28°F - CHICAGO WINTER ...
+    <div class="ticker" id="marquee-text">
+      MONTROSE HUB INITIALIZED ... CHECKING FEEDS ...
     </div>
   </div>
 
   <script>
+    // --- KEYS & CONFIG ---
     const BUS_KEY = "G2u3hCqi5yzbQppaPGcqAaVat";
     const TRAIN_KEY = "0fe79802b0f54862852c4d48ea6e51f1";
     
@@ -113,26 +114,31 @@
     ];
     let proxyIndex = 0;
 
+    // --- CLOCK ---
     function updateClock() { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
+    // --- FETCH HELPER ---
     async function fetchCTA(targetUrl) {
-      const cacheBuster = `&t=${Date.now()}`;
-      const finalUrl = PROXIES[proxyIndex] + encodeURIComponent(targetUrl + cacheBuster);
+      // NOTE: No &t= cache buster for Train API compatibility
+      const finalUrl = PROXIES[proxyIndex] + encodeURIComponent(targetUrl);
       try {
         const r = await fetch(finalUrl);
-        if (!r.ok) throw new Error();
+        if (!r.ok) throw new Error("Network Error");
         return await r.json();
       } catch (e) {
+        console.warn(`Proxy ${proxyIndex} hiccup. Retrying...`);
         proxyIndex = (proxyIndex + 1) % PROXIES.length;
         return null;
       }
     }
 
+    // --- BUS DATA ---
     async function getBusData() {
       const url = `https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=14828&format=json`;
       const data = await fetchCTA(url);
       if (!data) return;
+      
       const prd = data["bustime-response"].prd;
       let html = "";
       if (prd) {
@@ -144,28 +150,29 @@
       document.getElementById('bus-list').innerHTML = html;
     }
 
+    // --- TRAIN DATA ---
     async function getTrainData() {
       const url = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`;
       const data = await fetchCTA(url);
-      if (!data || !data.ctatt) return;
       
+      if (!data || !data.ctatt) return;
+      if (data.ctatt.errNm) return; // Silent fail on error to keep old data visible
+
       const eta = data.ctatt.eta;
       let html = "";
       
-      const loopTrains = eta ? eta.filter(t => t.trDr === "1") : [];
+      // Filter for Southbound (Loop)
+      const loopTrains = eta ? eta.filter(t => t.trDr === "5") : [];
 
       if (loopTrains.length > 0) {
         loopTrains.slice(0, 2).forEach(t => {
           const rawDiff = Math.round((new Date(t.arrT) - new Date(t.prdt)) / 60000);
           
-          // --- THE BUFFER ADJUSTMENT ---
-          // Subtract 2 minutes, but don't let it go below 0.
+          // BUFFER: Subtract 2 mins walking time
           const bufferedDiff = Math.max(0, rawDiff - 2);
           
           const isLive = t.isApp === "1" || t.isSch === "0";
           const icon = isLive ? `<span class="live-icon ${bufferedDiff <= 1 ? 'blink' : ''}">((( )))</span>` : `<span class="sch-icon">[SCH]</span>`;
-          
-          // If buffered time is 1 min or 0 min, show "DUE"
           const timeStr = bufferedDiff <= 1 ? 'DUE' : bufferedDiff + ' MIN';
           
           html += `<div class="arrival-row ${bufferedDiff <= 1 ? 'due blink' : ''}">${timeStr} ${icon}</div>`;
@@ -176,9 +183,29 @@
       document.getElementById('train-list').innerHTML = html;
     }
 
+    // --- WEATHER & TICKER ---
+    async function updateTicker() {
+      let weatherMsg = "WEATHER: N/A";
+      try {
+        const wRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=41.96&longitude=-87.67&current=temperature_2m&temperature_unit=fahrenheit");
+        const wData = await wRes.json();
+        const temp = Math.round(wData.current.temperature_2m);
+        weatherMsg = `WEATHER: ${temp}°F - CHICAGO`;
+      } catch (e) {}
+
+      const msg = `MONTROSE HUB: 2-MINUTE BUFFER ACTIVE ... STAND CLEAR OF DOORS ... ${weatherMsg} ... HAVE A SAFE COMMUTE ...`;
+      document.getElementById('marquee-text').textContent = msg;
+    }
+
+    // --- INIT ---
     function updateAll() { getBusData(); getTrainData(); }
+    
     updateAll();
+    updateTicker();
+    
+    // Refresh Transit every 30s, Weather every 10m
     setInterval(updateAll, 30000);
+    setInterval(updateTicker, 600000); 
   </script>
 </body>
 </html>
