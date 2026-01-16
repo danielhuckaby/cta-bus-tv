@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MONTROSE HUB - AUDIO EDITION</title>
+  <title>MONTROSE HUB - ASHLAND LIVE</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -21,7 +21,7 @@
       flex-direction: column;
       overflow: hidden;
       text-transform: uppercase;
-      cursor: auto; /* Changed to auto so you can see cursor to click sound button */
+      cursor: auto;
     }
 
     /* CRT Scanline Overlay */
@@ -36,63 +36,53 @@
       pointer-events: none;
     }
 
-    /* --- SPRITES --- */
-    .sprite-layer { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-    .bus-sprite {
-      position: absolute; bottom: 120px; width: 80px; height: 32px; background: #eee;
-      border: 4px solid #000; box-shadow: inset 0 8px 0 #333, 0 4px 0 var(--cta-blue), 0 8px 0 var(--cta-red);
-      animation: drive-bus 18s linear infinite;
-    }
-    .train-sprite {
-      position: absolute; top: 150px; width: 120px; height: 28px; background: #bbb;
-      border: 4px solid #000; box-shadow: inset 20px 0 0 #555, inset 60px 0 0 #555, inset 100px 0 0 #555, 0 -4px 0 var(--cta-brown);
-      animation: drive-train 14s linear infinite;
-    }
-    @keyframes drive-bus { from { left: -100px; } to { left: 110vw; } }
-    @keyframes drive-train { from { right: -150px; } to { right: 110vw; } }
-
     /* --- UI --- */
     .top-bar {
-      display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; 
-      background-color: #000; color: #FFFF00; font-size: 14px; border-bottom: 4px solid #FFF; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; 
+      background-color: #000; color: #FFFF00; font-size: 12px; border-bottom: 4px solid #FFF; z-index: 10;
     }
-    
-    /* AUDIO BUTTON STYLE */
     .sound-btn {
       background: #000; color: #c60c30; border: 2px solid #c60c30;
-      font-family: 'Press Start 2P', cursive; font-size: 12px;
-      padding: 10px; cursor: pointer; text-transform: uppercase;
+      font-family: 'Press Start 2P', cursive; font-size: 10px;
+      padding: 8px; cursor: pointer; text-transform: uppercase;
     }
     .sound-btn:hover { background: #222; }
     .sound-on { color: #00FF00; border-color: #00FF00; }
 
-    .container { padding: 30px 50px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-around; z-index: 5; }
-    .section-box { background-color: rgba(0, 0, 0, 0.85); border: 4px solid #FFF; padding: 20px; box-shadow: 10px 10px 0px #000; }
-    .label { font-size: 14px; margin-bottom: 15px; display: inline-block; padding: 5px; border: 2px solid; }
+    .container { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; z-index: 5; }
+    
+    .section-box { 
+      background-color: rgba(0, 0, 0, 0.85); border: 4px solid #FFF; padding: 15px; 
+      box-shadow: 8px 8px 0px #000; flex: 1; display: flex; flex-direction: column;
+    }
+
+    /* SPLIT COLUMNS */
+    .split-container { display: flex; height: 100%; }
+    .split-col { flex: 1; padding: 0 10px; }
+    .split-col:first-child { border-right: 2px dashed #555; }
+    
+    .header-row { margin-bottom: 10px; border-bottom: 2px solid #555; padding-bottom: 5px; }
+    .label { font-size: 12px; display: inline-block; padding: 4px; border: 2px solid; }
+    .sub-label { font-size: 10px; color: #AAA; margin-top: 5px; display: block;}
+
     .bus-color { color: #00FFFF; border-color: #00FFFF; }
     .train-color { color: #FFA500; border-color: #FFA500; }
-    .arrival-row { font-size: 34px; margin: 10px 0; display: flex; align-items: center; }
-    .live-icon { color: #00FF00; font-size: 12px; margin-left: 20px; }
-    .sch-icon { color: #666; font-size: 10px; margin-left: 20px; }
+
+    .arrival-row { font-size: 24px; margin: 15px 0; display: flex; align-items: center; justify-content: space-between; }
+    .live-icon { color: #00FF00; font-size: 10px; }
+    .sch-icon { color: #666; font-size: 8px; }
     .due { color: #00FF00; }
     .blink { animation: step-blink 1s step-end infinite; }
     @keyframes step-blink { 50% { visibility: hidden; } }
 
-    .ticker-wrap { background-color: #FF0000; color: #FFF; padding: 15px 0; font-size: 16px; border-top: 4px solid #FFF; z-index: 50; }
+    .ticker-wrap { background-color: #FF0000; color: #FFF; padding: 10px 0; font-size: 14px; border-top: 4px solid #FFF; z-index: 50; }
     .ticker { display: inline-block; white-space: nowrap; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
   </style>
 </head>
 <body>
 
-  <audio id="bg-music" loop>
-    <source src="transit.mp3" type="audio/mpeg">
-  </audio>
-
-  <div class="sprite-layer">
-    <div class="train-sprite"></div>
-    <div class="bus-sprite" style="animation-delay: 7s;"></div>
-  </div>
+  <audio id="bg-music" loop><source src="transit.mp3" type="audio/mpeg"></audio>
 
   <div class="top-bar">
     <div id="clock">00:00:00</div>
@@ -101,153 +91,205 @@
   </div>
 
   <div class="container">
+    
     <div class="section-box">
-      <div class="label bus-color">BUS 78 MONTROSE (WB)</div>
-      <div id="bus-list"><div class="arrival-row">LOADING...</div></div>
+      <div class="split-container">
+        <div class="split-col">
+          <div class="header-row">
+            <div class="label bus-color">BUS 78 (WB)</div>
+            <span class="sub-label">TO BLUE LINE</span>
+          </div>
+          <div id="bus-wb">Initializing...</div>
+        </div>
+        <div class="split-col">
+          <div class="header-row">
+            <div class="label bus-color">BUS 78 (EB)</div>
+            <span class="sub-label">TO LAKEFRONT</span>
+          </div>
+          <div id="bus-eb">Initializing...</div>
+        </div>
+      </div>
     </div>
 
     <div class="section-box">
-      <div class="label train-color">L BROWN LINE (LOOP)</div>
-      <div id="train-list"><div class="arrival-row">LOADING...</div></div>
+      <div class="split-container">
+        <div class="split-col">
+          <div class="header-row">
+            <div class="label train-color">BROWN (LOOP)</div>
+            <span class="sub-label">SOUTHBOUND</span>
+          </div>
+          <div id="train-loop">Initializing...</div>
+        </div>
+        <div class="split-col">
+          <div class="header-row">
+            <div class="label train-color">BROWN (KIMBALL)</div>
+            <span class="sub-label">NORTHBOUND</span>
+          </div>
+          <div id="train-kimball">Initializing...</div>
+        </div>
+      </div>
     </div>
+
   </div>
 
   <div class="ticker-wrap">
-    <div class="ticker" id="marquee-text">
-      MONTROSE HUB INITIALIZED ... CHECKING FEEDS ...
-    </div>
+    <div class="ticker" id="marquee-text">INITIALIZING SYSTEMS...</div>
   </div>
 
   <script>
-    // --- KEYS & CONFIG ---
-    const BUS_KEY = "G2u3hCqi5yzbQppaPGcqAaVat";
+    // --- CONFIGURATION ---
     const TRAIN_KEY = "0fe79802b0f54862852c4d48ea6e51f1";
+    const BUS_KEY = "G2u3hCqi5yzbQppaPGcqAaVat";
+    
+    // STOP IDs (Montrose & Ashland - VERIFIED)
+    const STOP_ID_WB = "14828"; // Westbound (Corner of Ashland)
+    const STOP_ID_EB = "17944"; // Eastbound (Corner of Ashland)
 
-    let lastBusHtml = '<div class="arrival-row">LOADING...</div>';
-    let lastTrainHtml = '<div class="arrival-row">LOADING...</div>';
+    let lastTrainHtmlLoop = "LOADING...";
+    let lastTrainHtmlKim = "LOADING...";
 
-    // --- AUDIO HANDLER ---
+    // --- PROXY ROTATION ---
+    const PROXY_1 = "https://api.codetabs.com/v1/proxy?quest=";
+    const PROXY_2 = "https://corsproxy.io/?";
+
+    // --- AUDIO ---
+    // Defined inside window.onload or simply here because script is at bottom of body
     const audioBtn = document.getElementById('audio-toggle');
     const player = document.getElementById('bg-music');
     
-    audioBtn.addEventListener('click', () => {
-      if (player.paused) {
-        player.play().then(() => {
-          audioBtn.textContent = "SOUND: ON";
-          audioBtn.classList.add('sound-on');
-        }).catch(e => {
-          alert("File 'transit.mp3' not found in folder!");
-        });
-      } else {
-        player.pause();
-        audioBtn.textContent = "SOUND: OFF";
-        audioBtn.classList.remove('sound-on');
-      }
-    });
+    if (audioBtn && player) {
+      audioBtn.addEventListener('click', () => {
+        if (player.paused) {
+          player.play().then(() => {
+            audioBtn.textContent = "SOUND: ON"; audioBtn.classList.add('sound-on');
+          }).catch(e => alert("Please add 'transit.mp3' to folder"));
+        } else {
+          player.pause(); audioBtn.textContent = "SOUND: OFF"; audioBtn.classList.remove('sound-on');
+        }
+      });
+    }
 
     // --- CLOCK ---
     function updateClock() { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
-    // --- BUS FETCH (Simple & Fast) ---
-    async function getBusData() {
-      const url = `https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=14828&format=json&random=${Date.now()}`;
-      const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
-      
+    // --- FETCH HELPER ---
+    async function smartFetch(targetUrl) {
       try {
-        const r = await fetch(proxyUrl, {cache: "no-store"});
-        const data = await r.json();
-        
-        if (!data || !data["bustime-response"]) return;
-        const prd = data["bustime-response"].prd;
-        
-        let html = "";
-        if (prd) {
-          prd.slice(0, 2).forEach(b => {
-            const isDue = b.prdctdn === "DUE";
-            html += `<div class="arrival-row ${isDue ? 'due blink' : ''}">${isDue ? 'DUE' : b.prdctdn + ' MIN'} <span class="live-icon">((( )))</span></div>`;
-          });
-        } else { html = '<div class="arrival-row" style="color:#666">NO BUSES</div>'; }
-        
-        lastBusHtml = html;
-        document.getElementById('bus-list').innerHTML = html;
-        
-      } catch(e) { console.warn("Bus fetch hiccup"); }
-    }
-
-    // --- TRAIN FETCH (Hybrid Strategy) ---
-    async function getTrainData() {
-      const cleanUrl = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`;
-      
-      try {
-        // Fast Proxy
-        const hashUrl = cleanUrl + `#${Date.now()}`; 
-        const fastProxy = "https://corsproxy.io/?" + encodeURIComponent(hashUrl);
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const r = await fetch(fastProxy, { signal: controller.signal, cache: "no-store" });
-        clearTimeout(timeoutId);
-        
-        const data = await r.json();
-        processTrainData(data); 
-
-      } catch (e) {
-        console.warn("Switching to backup proxy...");
-        // Slow/Reliable Proxy
+        const p1 = PROXY_1 + encodeURIComponent(targetUrl);
+        const r1 = await fetch(p1);
+        if (!r1.ok) throw new Error("P1 Blocked");
+        return await r1.json();
+      } catch (e1) {
+        console.warn("Proxy 1 failed, trying Proxy 2...");
         try {
-          const wrapperUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}&rand=${Date.now()}`;
-          const r2 = await fetch(wrapperUrl);
-          const wrapperData = await r2.json();
-          const realData = JSON.parse(wrapperData.contents);
-          processTrainData(realData);
+          const p2 = PROXY_2 + encodeURIComponent(targetUrl);
+          const r2 = await fetch(p2);
+          if (!r2.ok) throw new Error("P2 Blocked");
+          return await r2.json();
         } catch (e2) {
-          if (lastTrainHtml.includes("LOADING")) {
-            document.getElementById('train-list').innerHTML = '<div class="arrival-row" style="color:red; font-size:12px;">SIGNAL WEAK...</div>';
-          }
+          throw new Error("NET_FAIL");
         }
       }
     }
 
-    function processTrainData(data) {
-      if (!data || !data.ctatt) return;
-      const eta = data.ctatt.eta;
-      let html = "";
-      const loopTrains = eta ? eta.filter(t => t.trDr === "5") : [];
+    // --- BUS LOGIC ---
+    async function getBusData() {
+      const stopIds = `${STOP_ID_WB},${STOP_ID_EB}`;
+      const url = `https://www.ctabustracker.com/bustime/api/v2/getpredictions?key=${BUS_KEY}&rt=78&stpid=${stopIds}&format=json&random=${Date.now()}`;
+      
+      try {
+        const data = await smartFetch(url);
+        const allPreds = data["bustime-response"]?.prd || [];
 
-      if (loopTrains.length > 0) {
-        loopTrains.slice(0, 2).forEach(t => {
-          const rawDiff = Math.round((new Date(t.arrT) - new Date(t.prdt)) / 60000);
-          const bufferedDiff = Math.max(0, rawDiff - 2);
-          const isLive = t.isApp === "1" || t.isSch === "0";
-          const icon = isLive ? `<span class="live-icon ${bufferedDiff <= 1 ? 'blink' : ''}">((( )))</span>` : `<span class="sch-icon">[SCH]</span>`;
-          const timeStr = bufferedDiff <= 1 ? 'DUE' : bufferedDiff + ' MIN';
-          html += `<div class="arrival-row ${bufferedDiff <= 1 ? 'due blink' : ''}">${timeStr} ${icon}</div>`;
-        });
-      } else { 
-        html = '<div class="arrival-row" style="color:#666; font-size:12px;">NO LOOP TRAINS</div>'; 
+        // FIX: Using loose equality (==) to match String ID with Number ID
+        const wbPreds = allPreds.filter(p => p.stpid == STOP_ID_WB);
+        const ebPreds = allPreds.filter(p => p.stpid == STOP_ID_EB);
+
+        renderBusList(wbPreds, 'bus-wb');
+        renderBusList(ebPreds, 'bus-eb');
+
+      } catch(e) {
+        const errMsg = `<span style="color:red; font-size:10px;">ERR: ${e.message}</span>`;
+        if(document.getElementById('bus-wb').textContent.includes("Initializing")) {
+           document.getElementById('bus-wb').innerHTML = errMsg;
+           document.getElementById('bus-eb').innerHTML = errMsg;
+        }
       }
-      lastTrainHtml = html;
-      document.getElementById('train-list').innerHTML = html;
+    }
+
+    function renderBusList(list, elId) {
+      let html = "";
+      if (list.length > 0) {
+        list.slice(0, 2).forEach(b => {
+          const isDue = b.prdctdn === "DUE";
+          html += `<div class="arrival-row ${isDue ? 'due blink' : ''}">
+                     <span>${isDue ? 'DUE' : b.prdctdn + '<small>m</small>'}</span> 
+                     <span class="live-icon">((( )))</span>
+                   </div>`;
+        });
+      } else { html = '<div class="arrival-row" style="color:#666; font-size:14px;">NO BUS</div>'; }
+      document.getElementById(elId).innerHTML = html;
+    }
+
+    // --- TRAIN LOGIC ---
+    async function getTrainData() {
+      const cleanUrl = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${TRAIN_KEY}&mapid=41500&rt=BRN&outputType=JSON`;
+      const hashUrl = cleanUrl + `#${Date.now()}`; 
+
+      try {
+        const data = await smartFetch(hashUrl);
+        if (!data || !data.ctatt) throw new Error("API_FAIL");
+
+        const eta = data.ctatt.eta || [];
+        renderTrainList(eta.filter(t => t.trDr === "5"), 'train-loop', lastTrainHtmlLoop);
+        renderTrainList(eta.filter(t => t.trDr === "1"), 'train-kimball', lastTrainHtmlKim);
+
+      } catch (e) {
+        const errMsg = `<span style="color:red; font-size:10px;">ERR: ${e.message}</span>`;
+        if (lastTrainHtmlLoop.includes("LOADING")) {
+          document.getElementById('train-loop').innerHTML = errMsg;
+          document.getElementById('train-kimball').innerHTML = errMsg;
+        }
+      }
+    }
+
+    function renderTrainList(list, elId, lastHtml) {
+      let html = "";
+      if (list.length > 0) {
+        list.slice(0, 2).forEach(t => {
+          const rawDiff = Math.round((new Date(t.arrT) - new Date(t.prdt)) / 60000);
+          const bufferedDiff = Math.max(0, rawDiff - 2); 
+          const isLive = t.isApp === "1" || t.isSch === "0";
+          
+          html += `<div class="arrival-row ${bufferedDiff <= 1 ? 'due blink' : ''}">
+                     <span>${bufferedDiff <= 1 ? 'DUE' : bufferedDiff + '<small>m</small>'}</span>
+                     ${isLive ? '<span class="live-icon">((( )))</span>' : '<span class="sch-icon">[SCH]</span>'}
+                   </div>`;
+        });
+      } else { html = '<div class="arrival-row" style="color:#666; font-size:14px;">NO TRAINS</div>'; }
+      
+      document.getElementById(elId).innerHTML = html;
+      if (elId === 'train-loop') lastTrainHtmlLoop = html;
+      else lastTrainHtmlKim = html;
     }
 
     // --- WEATHER ---
     async function updateTicker() {
-      let weatherMsg = "";
       try {
-        const wRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=41.96&longitude=-87.67&current=temperature_2m&temperature_unit=fahrenheit");
-        const wData = await wRes.json();
-        const temp = Math.round(wData.current.temperature_2m);
-        weatherMsg = `WEATHER: ${temp}°F ... `;
+        const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=41.96&longitude=-87.67&current=temperature_2m&temperature_unit=fahrenheit");
+        const d = await r.json();
+        const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('marquee-text').textContent = `MONTROSE HUB (ASHLAND) [${now}] ... 2-MIN BUFFER (TRAINS) ... WEATHER: ${Math.round(d.current.temperature_2m)}°F`;
       } catch (e) {}
-
-      const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const msg = `MONTROSE HUB: LIVE UPDATES [${now}] ... 2-MINUTE BUFFER ACTIVE ... ${weatherMsg}HAVE A SAFE COMMUTE ...`;
-      document.getElementById('marquee-text').textContent = msg;
     }
 
-    function updateAll() { getBusData(); getTrainData(); }
+    // --- STAGGERED UPDATE ---
+    function updateAll() { 
+      getBusData(); 
+      setTimeout(getTrainData, 2000);
+    }
+    
     updateAll();
     updateTicker();
     setInterval(updateAll, 30000);
